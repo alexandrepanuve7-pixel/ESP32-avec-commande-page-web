@@ -1,0 +1,157 @@
+#include <WiFi.h>
+#include <WebServer.h>
+#include <HTTPClient.h>
+
+// ----------- PARAMÈTRES WIFI -----------
+const char* ssid = "TPSN035";        // Nom du réseau WiFi
+const char* password = "BTSSN2022";  // Mot de passe WiFi
+
+// Adresse du serveur PHP qui reçoit les données
+const char* serverName = "http://IP DE L'ESP32/....../......";
+
+// Création du serveur web sur le port 80
+WebServer server(80);
+
+// Définition des broches
+int led = ....;        // LED
+int buzzer = ....;     // Buzzer
+
+// Paramètres pour le buzzer (PWM)
+int freq = 2000;
+int resolution = 8;
+
+// Variables pour gestion du temps (sans delay)
+unsigned long previousMillis = 0;
+const long interval = 2000; // envoi toutes les 2 secondes
+
+// ----------- CONNEXION WIFI -----------
+void connectWiFi() {
+
+  WiFi.begin(ssid, password);
+
+  // Boucle jusqu'à connexion
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(200); // petit delay OK uniquement au démarrage
+  }
+
+  // Affiche connexion OK + IP
+  Serial.println("\nConnecté !");
+  Serial.println(WiFi.localIP());
+}
+
+// ================= ENVOI DONNÉES =================
+void sendData() {
+
+  // Génère une valeur aléatoire entre 0 et 99
+  int valeur = random(0, 100);
+
+  // Création objet HTTP
+  HTTPClient http;
+  http.begin(serverName);
+
+  // Type de données envoyées (format formulaire)
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+  // Donnée à envoyer
+  String postData = "valeur=" + String(valeur);
+
+  // Envoi de la requête POST
+  int code = http.POST(postData);
+
+  Serial.println("--------------");
+  Serial.print("Valeur envoyée: ");
+  Serial.println(valeur);
+
+  // Affiche code HTTP (200 = OK)
+  Serial.print("HTTP code: ");
+  Serial.println(code);
+
+  // Si réponse valide, afficher le retour du serveur
+  if (code > 0) {
+    Serial.println(http.getString());
+  }
+
+  // Ferme la connexion HTTP
+  http.end();
+}
+
+// ================= LED =================
+void handleLed() {
+
+  // Allume la LED
+  digitalWrite(led, HIGH);
+
+  //  Le delay bloque le programme (à éviter en version avancée)
+  delay(300);
+
+  // Éteint la LED
+  digitalWrite(led, LOW);
+
+  // Réponse envoyée au navigateur
+  server.send(200, "text/plain", "LED OK");
+}
+
+// ================= BUZZER =================
+void handleBuzzer() {
+
+  // Configure le buzzer en PWM (normalement à faire dans setup)
+  ledcAttach(buzzer, freq, resolution);
+
+  // Joue plusieurs sons pour faire une "mélodie"
+  ledcWriteTone(buzzer, 1000);
+  delay(300);
+
+  ledcWriteTone(buzzer, 500);
+  delay(300);
+
+  ledcWriteTone(buzzer, 1500);
+  delay(300);
+
+  // Coupe le son
+  ledcWriteTone(buzzer, 0);
+
+  // Réponse HTTP envoyée
+  server.send(200, "text/plain", "BUZZER OK");
+}
+
+// ================= SETUP =================
+void setup() {
+
+  // Démarre la communication série
+  Serial.begin(115200);
+
+  // Configure la LED en sortie
+  pinMode(led, OUTPUT);
+  digitalWrite(led, LOW);
+
+  // Connexion au WiFi
+  connectWiFi();
+
+  // Associe les URLs aux fonctions
+  server.on("/led", handleLed);     // http://IP/led
+  server.on("/son", handleBuzzer);  // http://IP/son
+
+  // Démarre le serveur web
+  server.begin();
+
+  Serial.println("Serveur ESP32 prêt");
+}
+
+// ================= LOOP =================
+void loop() {
+
+  // Gère les requêtes HTTP entrantes
+  server.handleClient();
+
+  // Vérifie la connexion WiFi
+  if (WiFi.status() != WL_CONNECTED) {
+    connectWiFi(); // reconnecte si besoin
+    return;
+  }
+
+  // Envoi de données toutes les X millisecondes (sans delay)
+  if (millis() - previousMillis >= interval) {
+    previousMillis = millis();
+    sendData();
+  }
+}
