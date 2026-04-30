@@ -7,9 +7,8 @@
 Ce projet met en œuvre un système complet de communication entre un **ESP32** et un **serveur web**.
 
 Depuis mon ordinateur physique, je me suis servie de UBUNTU, une machine virtuelle que j’ai utilisé via le logiciel de virtualisation « Oracle Virtual Box » pour pouvoir héberger des fichier «. PHP » qui me serviront à faire m page web. Cette machine UBUNTU agira comme un PC à part entière, je devais crée une page web qui as pour but d’envoyer une requête a un microcontrôleur (ESP32) qui actionne une LED est un BUZZER.
-Pour cela j’ai donc crée deux fichiers ".PHP", que j'ai au préalable codé sur ma machine physique et que j’ai mis dans ma machine UBUNTU, dans le même dossier qui est nommé « BTSCIEL », le chemin d'accès est "var/www/html/btsciel", il y a un fichier nommé "data. PHP" et l'autre "index. PHP". 
+Pour cela j’ai donc crée un fichier "data.PHP", que j'ai au préalable codé sur ma machine physique et que j’ai mis dans ma machine UBUNTU, dans le même dossier qui est nommé « BTSCIEL », le chemin d'accès est "var/www/html/btsciel".
 Le fichier nommée "data. PHP" est ma page web dynamique, que j'ai paramétrer pour pouvoir envoyer des requêtes à mon ESP32, qui elle se chargeras d’allumer la LED ou le BUZZER, en fonction de mon choix depuis le site web. (Voir code)
-Ensuite mon « index. PHP », me sert a bloqué l’accès à la racine de mes fichiers. par exemple,
 
 
 ---
